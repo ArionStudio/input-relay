@@ -289,13 +289,13 @@ fn load_history_entries(
             "SELECT id, text, created_at_ms FROM history_entries ORDER BY created_at_ms DESC LIMIT ?1",
         )?;
         let rows = statement.query_map(params![limit as i64], history_entry_from_row)?;
-        return rows.collect::<Result<Vec<_>, _>>().map_err(Into::into);
+        rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
     } else {
         let mut statement = conn.prepare(
             "SELECT id, text, created_at_ms FROM history_entries ORDER BY created_at_ms DESC",
         )?;
         let rows = statement.query_map([], history_entry_from_row)?;
-        return rows.collect::<Result<Vec<_>, _>>().map_err(Into::into);
+        rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
     }
 }
 

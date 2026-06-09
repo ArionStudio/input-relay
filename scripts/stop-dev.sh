@@ -1,12 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ports=(4317 5173 5174 5175)
-
-for port in "${ports[@]}"; do
-  fuser -k "${port}/tcp" >/dev/null 2>&1 || true
-done
-
 pkill -f 'target/debug/input-relay-service' >/dev/null 2>&1 || true
 pkill -f 'vite --host 127.0.0.1 --port 5173' >/dev/null 2>&1 || true
 pkill -f 'vite --host 0.0.0.0 --port 5174' >/dev/null 2>&1 || true

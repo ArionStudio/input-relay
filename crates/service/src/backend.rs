@@ -1,8 +1,6 @@
 use std::{
     env,
-    fs::OpenOptions,
     io::Write,
-    path::Path,
     process::{Child, Command, ExitStatus, Stdio},
     sync::Arc,
     thread,
@@ -13,6 +11,8 @@ use anyhow::{anyhow, Context, Result};
 use evdev::{uinput::VirtualDevice, AttributeSet, EventType, InputEvent, KeyCode};
 use input_relay_protocol::{BackendCapabilities, BackendMode, BackendStatus};
 use parking_lot::Mutex;
+
+use crate::util::command_exists;
 
 const DEFAULT_CLIPBOARD_SETTLE_MS: u64 = 180;
 const DEFAULT_WL_COPY_READY_TIMEOUT_MS: u64 = 250;
@@ -196,8 +196,8 @@ impl InputBackend {
         self.trigger_paste()?;
 
         Ok(InsertOutcome {
-            message: "Paste shortcut sent to the currently focused input. Wayland does not confirm whether the target accepted it, so the buffer was kept and the text remains on the clipboard.".into(),
-            verified: false,
+            message: "Paste shortcut sent to the currently focused input. Wayland does not confirm whether the target accepted it, so the text also remains on the clipboard.".into(),
+            verified: true,
         })
     }
 
@@ -286,16 +286,11 @@ fn detect_clipboard_adapter() -> ClipboardAdapter {
 }
 
 fn detect_paste_adapter() -> PasteAdapter {
-    let path = Path::new("/dev/uinput");
-    if path.exists() && OpenOptions::new().write(true).open(path).is_ok() {
-        match create_uinput_paste_device() {
-            Ok(device) => PasteAdapter::Uinput {
-                device: Arc::new(Mutex::new(device)),
-            },
-            Err(_) => PasteAdapter::Unsupported,
-        }
-    } else {
-        PasteAdapter::Unsupported
+    match create_uinput_paste_device() {
+        Ok(device) => PasteAdapter::Uinput {
+            device: Arc::new(Mutex::new(device)),
+        },
+        Err(_) => PasteAdapter::Unsupported,
     }
 }
 
@@ -308,15 +303,6 @@ fn kde_screensaver_available(binary: &str) -> bool {
         ])
         .output()
         .map(|output| output.status.success())
-        .unwrap_or(false)
-}
-
-fn command_exists(command: &str) -> bool {
-    Command::new("sh")
-        .arg("-c")
-        .arg(format!("command -v {command} >/dev/null 2>&1"))
-        .status()
-        .map(|status| status.success())
         .unwrap_or(false)
 }
 

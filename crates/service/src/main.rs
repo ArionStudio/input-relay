@@ -19,9 +19,9 @@ use axum::{
 use backend::InputBackend;
 use futures_util::{SinkExt, StreamExt};
 use input_relay_protocol::{
-    ActiveSession, BufferState, ClientAction, ClientEnvelope, DesktopCommand, Device,
-    DevicePermissions, HistoryEntry, HistoryMode, HistoryState, Notice, NoticeLevel,
-    RegistrationTicket, RelayState, Selection, ServerEvent,
+    ActiveSession, BackendStatus, BufferState, ClientAction, ClientEnvelope, DesktopCommand,
+    Device, DevicePermissions, HistoryEntry, HistoryMode, HistoryState, NetworkStatus, Notice,
+    NoticeLevel, RegistrationTicket, RelayState, Selection, ServerEvent,
 };
 use keychain::Keychain;
 use parking_lot::{Mutex, RwLock};
@@ -35,6 +35,7 @@ mod backend;
 mod keychain;
 mod network;
 mod storage;
+mod util;
 
 const DESKTOP_DEVICE_ID: &str = "desktop";
 const REGISTRATION_TTL_MS: u64 = 10 * 60 * 1000;
@@ -106,9 +107,7 @@ impl AppState {
             "keychain adapter detected"
         );
 
-        let mut state = initial_state();
-        state.backend = backend.status();
-        state.network = network;
+        let mut state = initial_state(backend.status(), network);
         state
             .backend
             .notes
@@ -205,7 +204,7 @@ fn sanitize_snapshot(mut state: RelayState) -> RelayState {
     state
 }
 
-fn initial_state() -> RelayState {
+fn initial_state(backend: BackendStatus, network: NetworkStatus) -> RelayState {
     RelayState {
         locked: true,
         buffer: BufferState {
@@ -217,8 +216,8 @@ fn initial_state() -> RelayState {
         mock_device: unregistered_device_placeholder(),
         devices: Vec::new(),
         registration: None,
-        backend: InputBackend::detect().status(),
-        network: network::detect(IpAddr::from([127, 0, 0, 1]), 4317, 5174),
+        backend,
+        network,
         history: HistoryState {
             mode: HistoryMode::None,
             limit: 10,
@@ -653,7 +652,7 @@ fn registration_code() -> String {
 }
 
 fn bound_selection(text: &str, selection: Selection) -> Selection {
-    let len = text.len();
+    let len = text.encode_utf16().count();
     Selection {
         start: selection.start.min(len),
         end: selection.end.min(len),
@@ -754,7 +753,7 @@ async fn websocket(socket: WebSocket, state: AppState) {
     let mut events = state.events.subscribe();
     let state_for_receive = state.clone();
 
-    let send_task = tokio::spawn(async move {
+    let mut send_task = tokio::spawn(async move {
         while let Ok(event) = events.recv().await {
             let text = match serde_json::to_string(&event) {
                 Ok(text) => text,
@@ -769,7 +768,7 @@ async fn websocket(socket: WebSocket, state: AppState) {
         }
     });
 
-    let receive_task = tokio::spawn(async move {
+    let mut receive_task = tokio::spawn(async move {
         while let Some(message) = receiver.next().await {
             match message {
                 Ok(Message::Text(text)) => match serde_json::from_str::<ClientEnvelope>(&text) {
@@ -787,7 +786,19 @@ async fn websocket(socket: WebSocket, state: AppState) {
     });
 
     tokio::select! {
-        _ = send_task => {}
-        _ = receive_task => {}
+        result = &mut send_task => {
+            if let Err(error) = result {
+                warn!(?error, "websocket send task failed");
+            }
+            receive_task.abort();
+            let _ = receive_task.await;
+        }
+        result = &mut receive_task => {
+            if let Err(error) = result {
+                warn!(?error, "websocket receive task failed");
+            }
+            send_task.abort();
+            let _ = send_task.await;
+        }
     }
 }

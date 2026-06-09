@@ -1,6 +1,8 @@
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+pub const MOCK_DEVICE_ID: &str = "mock-phone";
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RelayState {
@@ -27,7 +29,9 @@ pub struct BufferState {
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Selection {
+    /// UTF-16 code unit offset, matching textarea selectionStart/selectionEnd.
     pub start: usize,
+    /// UTF-16 code unit offset, matching textarea selectionStart/selectionEnd.
     pub end: usize,
 }
 

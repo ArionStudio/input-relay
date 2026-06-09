@@ -47,6 +47,7 @@ export function App() {
   const [registrationMessage, setRegistrationMessage] =
     React.useState<RegistrationMessage | null>(null);
   const [registering, setRegistering] = React.useState(false);
+  const draftRef = React.useRef<HTMLTextAreaElement | null>(null);
   const draftSelectionRef = React.useRef({ start: 0, end: 0 });
 
   React.useEffect(() => {
@@ -96,6 +97,28 @@ export function App() {
   const toastNotice =
     notice && toastId === notice.id ? formatPhoneNotice(notice) : null;
 
+  const readDraftSelection = React.useCallback(() => {
+    const textarea = draftRef.current;
+    if (!textarea) {
+      return draftSelectionRef.current;
+    }
+
+    return {
+      start: textarea.selectionStart,
+      end: textarea.selectionEnd,
+    };
+  }, []);
+
+  const updateDraftSelection = React.useCallback(
+    (event: React.SyntheticEvent<HTMLTextAreaElement>) => {
+      draftSelectionRef.current = {
+        start: event.currentTarget.selectionStart,
+        end: event.currentTarget.selectionEnd,
+      };
+    },
+    [],
+  );
+
   const updateText = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     const next = event.currentTarget.value;
     const selection = {
@@ -122,7 +145,7 @@ export function App() {
     send({
       type: "acceptDraftText",
       text: draft,
-      selection: draftSelectionRef.current,
+      selection: readDraftSelection(),
     });
   };
 
@@ -186,7 +209,7 @@ export function App() {
             <p className="mt-0.5 truncate text-xs text-muted-foreground">
               {locked
                 ? "Locked"
-                : currentDevice?.name ?? "Register this phone"}
+                : (currentDevice?.name ?? "Register this phone")}
             </p>
           </div>
           <Badge tone={connected ? "good" : "danger"}>
@@ -230,6 +253,8 @@ export function App() {
             draft={draft}
             keyboardOpen={keyboardComposeMode}
             revision={state?.buffer.revision ?? 0}
+            textareaRef={draftRef}
+            updateSelection={updateDraftSelection}
             updateText={updateText}
           />
         ) : (
@@ -243,7 +268,10 @@ export function App() {
         )}
       </section>
 
-      {!keyboardComposeMode && !locked && !needsRegistration && currentDevice ? (
+      {!keyboardComposeMode &&
+      !locked &&
+      !needsRegistration &&
+      currentDevice ? (
         <PhoneTabs activeView={activeView} setActiveView={setActiveView} />
       ) : null}
 
@@ -430,6 +458,8 @@ function ComposeView({
   acceptDisabledReason,
   clearDisabled,
   keyboardOpen,
+  textareaRef,
+  updateSelection,
   updateText,
   accept,
   clear,
@@ -440,6 +470,8 @@ function ComposeView({
   acceptDisabledReason: string | null;
   clearDisabled: boolean;
   keyboardOpen: boolean;
+  textareaRef: React.Ref<HTMLTextAreaElement>;
+  updateSelection: (event: React.SyntheticEvent<HTMLTextAreaElement>) => void;
   updateText: (event: React.ChangeEvent<HTMLTextAreaElement>) => void;
   accept: () => void;
   clear: () => void;
@@ -480,9 +512,13 @@ function ComposeView({
         disabled={!canEdit}
         enterKeyHint="send"
         placeholder="Type here"
+        ref={textareaRef}
         value={draft}
         onChange={updateText}
         onKeyDown={acceptOnEnter}
+        onKeyUp={updateSelection}
+        onMouseUp={updateSelection}
+        onSelect={updateSelection}
       />
       {!keyboardOpen ? (
         <div className="mt-3 grid gap-2">
@@ -570,7 +606,10 @@ function PhoneSettingsView({
         <h2 className="text-sm font-medium">Permissions</h2>
         <div className="mt-3 divide-y divide-border">
           {rows.map(([key, label]) => (
-            <div className="flex min-h-10 items-center justify-between" key={key}>
+            <div
+              className="flex min-h-10 items-center justify-between"
+              key={key}
+            >
               <span className="text-sm text-foreground">{label}</span>
               <span
                 className={
@@ -701,11 +740,13 @@ function RegisterDevicePanel({
           <h2 className="text-base font-semibold">Register phone</h2>
         </div>
         <Input
+          aria-label="Device name"
           placeholder="Device name"
           value={deviceName}
           onChange={(event) => setDeviceName(event.currentTarget.value)}
         />
         <Input
+          aria-label="Registration code"
           className="font-mono"
           placeholder="Registration code"
           value={registrationCode}

@@ -15,3 +15,4 @@ Then open:
 INFO
 
 cd "$ROOT_DIR"
+exec pnpm dev

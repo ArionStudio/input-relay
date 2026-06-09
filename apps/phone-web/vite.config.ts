@@ -16,12 +16,31 @@ export default defineConfig({
         display: "standalone",
         background_color: "#10100e",
         theme_color: "#10100e",
-        icons: []
-      }
-    })
+        icons: [
+          {
+            src: "/icon-192.png",
+            sizes: "192x192",
+            type: "image/png",
+            purpose: "any",
+          },
+          {
+            src: "/icon-512.png",
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "any",
+          },
+          {
+            src: "/icon-maskable-512.png",
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "maskable",
+          },
+        ],
+      },
+    }),
   ],
   server: {
     host: "0.0.0.0",
-    port: 5174
-  }
+    port: 5174,
+  },
 });

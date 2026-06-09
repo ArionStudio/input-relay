@@ -8,10 +8,10 @@ export function Panel({
   return (
     <section
       className={cn(
-        "group/card rounded-4xl bg-card p-4 text-sm text-card-foreground shadow-md ring-1 ring-foreground/5 dark:ring-foreground/10",
+        "group/panel rounded-4xl bg-card p-4 text-sm text-card-foreground shadow-md ring-1 ring-foreground/5 dark:ring-foreground/10",
         className,
       )}
-      data-slot="card"
+      data-slot="panel"
       {...props}
     />
   );
@@ -27,7 +27,7 @@ export function PanelHeader({
         "mb-3 grid auto-rows-min grid-cols-[1fr_auto] items-start gap-1.5",
         className,
       )}
-      data-slot="card-header"
+      data-slot="panel-header"
       {...props}
     />
   );
@@ -40,7 +40,7 @@ export function PanelTitle({
   return (
     <h2
       className={cn("font-heading text-base font-medium", className)}
-      data-slot="card-title"
+      data-slot="panel-title"
       {...props}
     />
   );
@@ -56,7 +56,7 @@ export function PanelDescription({
         "max-w-2xl text-sm leading-6 text-muted-foreground",
         className,
       )}
-      data-slot="card-description"
+      data-slot="panel-description"
       {...props}
     />
   );

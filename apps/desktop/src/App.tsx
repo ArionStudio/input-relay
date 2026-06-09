@@ -52,6 +52,7 @@ export function App() {
   const [registrationDeviceName, setRegistrationDeviceName] =
     React.useState("iPhone");
   const proxyTextareaRef = React.useRef<HTMLTextAreaElement | null>(null);
+  const pendingDraftTextRef = React.useRef<string | null>(null);
   const devicesKey = state?.devices.map((device) => device.id).join("|") ?? "";
   const selectedDevice =
     state?.devices.find((device) => device.id === selectedDeviceId) ??
@@ -59,10 +60,22 @@ export function App() {
     null;
 
   React.useEffect(() => {
-    if (state && !state.locked) {
+    if (!state || state.locked) {
+      return;
+    }
+
+    const pendingDraftText = pendingDraftTextRef.current;
+    if (pendingDraftText !== null) {
+      if (state.buffer.text !== pendingDraftText) {
+        return;
+      }
+      pendingDraftTextRef.current = null;
+    }
+
+    if (draft !== state.buffer.text) {
       setDraft(state.buffer.text);
     }
-  }, [state?.buffer.revision, state?.locked]);
+  }, [draft, state?.buffer.revision, state?.buffer.text, state?.locked]);
 
   React.useEffect(() => {
     if (!state || state.locked) {
@@ -98,7 +111,9 @@ export function App() {
   }, [desktopCommand?.id]);
 
   const send = (action: Parameters<typeof sendAction>[0]) => {
-    void sendAction(action);
+    void sendAction(action).catch((error) => {
+      setLocalMessage(error instanceof Error ? error.message : String(error));
+    });
   };
 
   const unlock = (event: React.FormEvent) => {
@@ -113,11 +128,17 @@ export function App() {
       start: event.currentTarget.selectionStart,
       end: event.currentTarget.selectionEnd,
     };
+    pendingDraftTextRef.current = next;
     setDraft(next);
-    send({
+    void sendAction({
       type: "setText",
       text: next,
       selection,
+    }).catch((error) => {
+      if (pendingDraftTextRef.current === next) {
+        pendingDraftTextRef.current = null;
+      }
+      setLocalMessage(error instanceof Error ? error.message : String(error));
     });
   };
 
@@ -158,8 +179,19 @@ export function App() {
       setLocalMessage("Buffer is empty.");
       return;
     }
-    await navigator.clipboard.writeText(state.buffer.text);
-    setLocalMessage("Buffer copied locally from the desktop UI.");
+    if (!navigator.clipboard) {
+      setLocalMessage("Clipboard access is not available in this environment.");
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(state.buffer.text);
+      setLocalMessage("Buffer copied locally from the desktop UI.");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error("failed to copy relay buffer", error);
+      setLocalMessage(`Failed to copy to clipboard: ${message}`);
+    }
   };
 
   return (
@@ -368,7 +400,11 @@ function UnlockPanel({
           value={password}
           onChange={(event) => setPassword(event.currentTarget.value)}
         />
-        <Button className="rounded-lg" disabled={!connected || !password} type="submit">
+        <Button
+          className="rounded-lg"
+          disabled={!connected || !password}
+          type="submit"
+        >
           <ShieldCheck className="h-4 w-4" />
           Unlock
         </Button>
@@ -675,7 +711,9 @@ function StatusPanel({
       <PanelHeader>
         <div>
           <PanelTitle>Service status</PanelTitle>
-          <PanelDescription>Current backend and phone reachability.</PanelDescription>
+          <PanelDescription>
+            Current backend and phone reachability.
+          </PanelDescription>
         </div>
         <MonitorUp className="h-5 w-5 text-muted-foreground" />
       </PanelHeader>
@@ -704,7 +742,9 @@ function StatusPanel({
               Tailscale {network.tailscale.running ? "running" : "off"}
             </Badge>
             <Badge tone={network.reachableFromPhone ? "good" : "danger"}>
-              {network.reachableFromPhone ? "phone reachable" : "localhost only"}
+              {network.reachableFromPhone
+                ? "phone reachable"
+                : "localhost only"}
             </Badge>
           </div>
           <p className="mt-3 break-all text-xs leading-5 text-muted-foreground">

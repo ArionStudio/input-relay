@@ -4,7 +4,19 @@ import { ThemeProvider } from "@input-relay/ui";
 import { App } from "./App";
 import "./styles.css";
 
-document.documentElement.classList.add("dark");
+const storedTheme = localStorage.getItem("input-relay-theme");
+const initialTheme =
+  storedTheme === "light" || storedTheme === "dark" || storedTheme === "system"
+    ? storedTheme
+    : "dark";
+const resolvedTheme =
+  initialTheme === "system"
+    ? window.matchMedia("(prefers-color-scheme: dark)").matches
+      ? "dark"
+      : "light"
+    : initialTheme;
+
+document.documentElement.classList.add(resolvedTheme);
 
 createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

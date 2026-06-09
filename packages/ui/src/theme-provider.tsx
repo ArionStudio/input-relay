@@ -136,7 +136,12 @@ export function ThemeProvider({
 
   React.useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.repeat || event.metaKey || event.ctrlKey || event.altKey) {
+      if (
+        event.repeat ||
+        event.altKey ||
+        !event.shiftKey ||
+        !(event.metaKey || event.ctrlKey)
+      ) {
         return;
       }
 
@@ -148,6 +153,7 @@ export function ThemeProvider({
         return;
       }
 
+      event.preventDefault();
       setThemeState((currentTheme) => {
         const nextTheme =
           currentTheme === "dark"

@@ -5,6 +5,8 @@ use std::{
 
 use anyhow::{anyhow, Context, Result};
 
+use crate::util::command_exists;
+
 const SERVICE: &str = "input-relay";
 const ACCOUNT: &str = "app-password";
 
@@ -123,13 +125,4 @@ impl Keychain {
             KeychainAdapter::Unavailable { reason } => Err(anyhow!(reason.clone())),
         }
     }
-}
-
-fn command_exists(command: &str) -> bool {
-    Command::new("sh")
-        .arg("-c")
-        .arg(format!("command -v {command} >/dev/null 2>&1"))
-        .status()
-        .map(|status| status.success())
-        .unwrap_or(false)
 }

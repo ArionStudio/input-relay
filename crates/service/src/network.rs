@@ -56,6 +56,7 @@ fn preferred_url_host(bind_host: IpAddr, tailscale: &TailscaleStatus) -> String 
         return "127.0.0.1".into();
     }
 
+    // Prefer IPv4 for phone URLs because bracketed IPv6 host handling is not wired yet.
     if let Some(ip) = tailscale.ips.iter().find(|ip| ip.contains('.')) {
         return ip.clone();
     }

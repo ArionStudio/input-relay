@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
 if ! command -v pacman >/dev/null 2>&1; then
   printf 'This installer targets CachyOS/Arch-like systems with pacman.\n' >&2
   exit 1
@@ -31,11 +33,13 @@ sudo systemctl enable --now tailscaled
 sudo install -Dm644 /dev/stdin /etc/udev/rules.d/70-input-relay-uinput.rules <<'RULE'
 KERNEL=="uinput", GROUP="input", MODE="0660", TAG+="uaccess"
 RULE
-sudo usermod -aG input "$USER"
+target_user="${SUDO_USER:-$(whoami)}"
+sudo usermod -aG input "$target_user"
 sudo modprobe uinput || true
 sudo udevadm control --reload-rules
 sudo udevadm trigger /dev/uinput || true
 
+cd "$ROOT_DIR"
 pnpm install
 
 printf '\nInstall step finished. Log out and back in if /dev/uinput is not writable yet.\n'

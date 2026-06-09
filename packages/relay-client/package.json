@@ -8,8 +8,7 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "check": "tsc -p tsconfig.json --noEmit",
-    "lint": "tsc -p tsconfig.json --noEmit"
+    "check": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
     "@input-relay/protocol": "workspace:*"

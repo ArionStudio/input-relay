@@ -6,7 +6,7 @@ use $grill-me-report backward so we have documented all stuff that was done unti
 ## Question 1. Should the app type into the currently focused PC input, or do you want a safer clipboard/dedicated-window workflow first?
 
 User answer:
-Yes recommended answer is valid 
+Yes recommended answer is valid
 
 we want to have specific proxy for it i think it will be safer and easier to use also
 
@@ -40,7 +40,7 @@ Live mode should behave like a remote keyboard, not an append-only text stream. 
 ## Question 5. What OS is the PC target?
 
 User answer:
-Yep we should make it like that but it should be system agnostic so layer of controling where we put it shoud be system agnostic. 
+Yep we should make it like that but it should be system agnostic so layer of controling where we put it shoud be system agnostic.
 
 We should have option to open this app using shortcut and the current input field so on our proxy view it should on accept automaticly put it there
 
@@ -106,7 +106,7 @@ This confirmed Tailscale Personal plus passkey auth as the expected default path
 ## Question 13. For the first OS backend, should we target your current Linux desktop first?
 
 User answer:
-Yes recomended is valid, 
+Yes recomended is valid,
 X11 and Wayland is layer of this
 
 so its not just linux its LinuxWayland LinuxX11
@@ -151,8 +151,8 @@ Resolved from local context. Environment variables and loginctl report XDG_SESSI
 ## Question 18. What should be the first concrete target environment?
 
 User answer:
-Our first target is our pc period. 
-Our app should install all needed dependencies with itself, for directed env  after detection 
+Our first target is our pc period.
+Our app should install all needed dependencies with itself, for directed env after detection
 can create install via gitrepo? so it enough to install it on other pc? or we need to do it difrently?
 
 Agent context:
@@ -169,9 +169,9 @@ The first installer should target only the current environment, KDE Plasma on Wa
 ## Question 20. What app shell should we use for the PC relay?
 
 User answer:
-We do not want phone app becouse its unnecesary in our uc we can have web / pwa app 
-same for passkey we need it 
-yes split into two app is proper but we are doing monorepo 
+We do not want phone app becouse its unnecesary in our uc we can have web / pwa app
+same for passkey we need it
+yes split into two app is proper but we are doing monorepo
 if tauri allow that thats okay its sth we can use react with?
 
 Agent context:
@@ -206,7 +206,7 @@ The background service is the security and execution authority. It owns register
 User answer:
 wait for this please describe all posible options, their advantages and cons
 
-We will go with strongest saftly for linux idk if 2 or 3 
+We will go with strongest saftly for linux idk if 2 or 3
 
 but it will be adapter so we can use diffrent model for windows and mac os
 
@@ -316,7 +316,7 @@ AcceptInsertText should remember the original focused target when the proxy open
 User answer:
 but it do not make sens if i focus on filed and on other app click accept then this field lose focus so you say shit
 
-default is:  we create input via phone on proxy input -> we click on phone accept -> it send it curently focused input field if there is no field that is focused or we cannot input text to that focused field 
+default is: we create input via phone on proxy input -> we click on phone accept -> it send it curently focused input field if there is no field that is focused or we cannot input text to that focused field
 then it should focus our proxy input and make it on top of apps so we can copy it manualy
 
 Agent context:
@@ -357,7 +357,7 @@ The app should support an input history feature with a default limit of the last
 ## Question 42. Is history enabled by default, or is the limit of 10 only the default when the user turns history on?
 
 User answer:
-we have 3 option 
+we have 3 option
 
 none
 last X
@@ -496,157 +496,138 @@ pnpm workspaces are accepted as the package manager/workspace base. Vite is appr
 
 ## Question 59. What backend language should the service use?
 
-User answer:
-2. yep
+User answer: 2. yep
 
 Agent context:
 The background service should use Rust, matching the Tauri native ecosystem and providing a strong fit for system adapters, IPC adapters, WebSocket service logic, and secure local execution.
 
 ## Question 60. Which Rust web framework should serve the phone PWA/API/WebSocket?
 
-User answer:
-3. list options witj cons nad pros
+User answer: 3. list options witj cons nad pros
 
 Agent context:
 The framework choice remains unresolved. The user requested a pros/cons list before choosing. Candidate options include axum, actix-web, poem, warp, and rocket.
 
 ## Question 61. Which encrypted SQLite approach should we use?
 
-User answer:
-4. list
+User answer: 4. list
 
 Agent context:
 The encrypted database implementation remains unresolved. The user requested a list of options. The requirement is whole-database encryption, with OS keychain default unlock and app password fallback.
 
 ## Question 62. How should WebAuthn/passkeys be implemented server-side?
 
-User answer:
-5. yup
+User answer: 5. yup
 
 Agent context:
 Server-side WebAuthn/passkey handling should use a maintained Rust WebAuthn crate rather than custom cryptography or hand-rolled protocol validation.
 
 ## Question 63. What is the exact phone editing protocol?
 
-User answer:
-6. okay
+User answer: 6. okay
 
 Agent context:
 The phone editing protocol should use structured actions such as setText, insertText, deleteRange, setSelection, accept, clear, and lockPc. These actions target the app-owned proxy buffer and explicit app commands, not arbitrary PC keyboard control.
 
 ## Question 64. Should phone editing use full text snapshots or operational edits?
 
-User answer:
-7. for later
+User answer: 7. for later
 
 Agent context:
 The snapshot-vs-operational-edit protocol detail is deferred. For architecture, the protocol should remain versioned so the MVP can start simple and evolve to richer edit actions later without breaking clients.
 
 ## Question 65. Should the phone PWA work offline?
 
-User answer:
-8. live connection needed
+User answer: 8. live connection needed
 
 Agent context:
 The phone PWA requires a live connection to the PC relay. Offline behavior is out of scope except for a basic installed shell or reconnect screen.
 
 ## Question 66. How should the PC proxy window be shown?
 
-User answer:
-9. okay
+User answer: 9. okay
 
 Agent context:
 The PC proxy window should be a Tauri utility-style window, hidden by default and capable of being shown/on-top for manual copy, status, registration, and debugging workflows.
 
 ## Question 67. Should the proxy window show the current buffer even when locked?
 
-User answer:
-10. no
+User answer: 10. no
 
 Agent context:
 The proxy window must not show the buffer while the app is locked. Locked state should hide protected state and require OS keychain unlock or app password fallback before use.
 
 ## Question 68. How do we implement lockPc on KDE Wayland?
 
-User answer:
-11. y
+User answer: 11. y
 
 Agent context:
 The lockPc action should be implemented through a KDE/session-specific command adapter detected during install, with capability reporting if unsupported.
 
 ## Question 69. How do we implement acceptInsertText on KDE Wayland first?
 
-User answer:
-12. Okay
+User answer: 12. Okay
 
 Agent context:
 The first KDE Wayland acceptInsertText implementation should investigate and use the safest available mechanism, likely clipboard plus paste trigger if reliable, with clear capability reporting and fallback behavior.
 
 ## Question 70. What happens if insertion fails?
 
-User answer:
-13. y, and inform mobile with toast
+User answer: 13. y, and inform mobile with toast
 
 Agent context:
 If insertion fails, the app should bring the proxy window on top with the text available for manual copy and also inform the mobile PWA with a toast/status message.
 
 ## Question 71. Should accepted text clear the buffer after insert?
 
-User answer:
-14. y
+User answer: 14. y
 
 Agent context:
 After successful AcceptInsertText, the proxy buffer should clear by default.
 
-## Question 73. What permissions are granted to the first registered phone by default?
+## Question 72. What permissions are granted to the first registered phone by default?
 
-User answer:
-15. editBuffer, pc will chose other
+User answer: 15. editBuffer, pc will chose other
 
 Agent context:
 The first registered phone should receive editBuffer by default. Other permissions, including acceptInsertText, clearBuffer, showProxy, and lockPc, should be chosen explicitly on the PC during approval.
 
-## Question 74. What should the device approval UI show?
+## Question 73. What should the device approval UI show?
 
-User answer:
-16. beside last pc choose permissions
+User answer: 16. beside last pc choose permissions
 
 Agent context:
 The approval UI should show device identity/status details and let the PC choose permissions explicitly. The phone should not self-grant or dictate privileged permissions.
 
-## Question 75. How are devices revoked?
+## Question 74. How are devices revoked?
 
-User answer:
-17. Y
+User answer: 17. Y
 
 Agent context:
 Devices should be revoked from PC settings only. Revocation should immediately disconnect active sessions and prevent future authenticated control from that device.
 
-## Question 76. Should logs include text contents?
+## Question 75. Should logs include text contents?
 
-User answer:
-18. y
+User answer: 18. y
 
 Agent context:
 The recommendation was that logs should never include text contents. The user's "y" is interpreted as accepting that recommendation. Logs may include metadata and error/capability events, but not proxy buffer contents, accepted text, history entries, or clipboard text.
 
-## Question 77. What should installer do when unsupported environment is detected?
+## Question 76. What should installer do when unsupported environment is detected?
 
-User answer:
-19. then inform that we do not support it 
+User answer: 19. then inform that we do not support it
 
 Agent context:
 When an unsupported environment is detected, the installer/app should clearly inform the user that the environment is not supported for normal operation. It may allow mock/debug mode, but should not pretend direct input actions are supported.
 
-## Question 78. What is MVP success definition?
+## Question 77. What is MVP success definition?
 
-User answer:
-20. y
+User answer: 20. y
 
 Agent context:
 The MVP success definition is accepted: installed on this KDE Wayland PC, phone pairs via Tailscale/passkey, edits the proxy buffer through a live connection, Accept inserts into the currently focused PC input or safely falls back with mobile notification, and Lock PC works when granted.
 
-## Question 79. What technology should the phone web/PWA client use?
+## Question 78. What technology should the phone web/PWA client use?
 
 User answer:
 i want shadcn also to be used, if its needed tanstack things also
@@ -654,7 +635,7 @@ i want shadcn also to be used, if its needed tanstack things also
 Agent context:
 The phone web/PWA client should use React, TypeScript, and Vite, with shadcn/ui as the component foundation. TanStack libraries are acceptable where useful, but should be added for concrete needs rather than by default. Likely candidates are TanStack Query for server state, TanStack Router if the PWA grows beyond a few simple views, and TanStack Table/Virtual only if history or device views need them.
 
-## Question 80. Should the PC Tauri UI use the same frontend stack: React + TypeScript + Vite + shadcn/ui + Tailwind?
+## Question 79. Should the PC Tauri UI use the same frontend stack: React + TypeScript + Vite + shadcn/ui + Tailwind?
 
 User answer:
 [Image attachment showing shadcn/create configured with Template: Vite, Base: Base UI, package manager: pnpm, RTL disabled, and monorepo toggle not enabled.]
@@ -662,7 +643,7 @@ User answer:
 Agent context:
 The PC Tauri UI should use the same frontend stack as the phone PWA: React, TypeScript, Vite, shadcn/ui, Tailwind, and pnpm. The screenshot also indicates a preference for shadcn's Base UI primitive base. The shadcn built-in monorepo generator should not be used blindly unless its generated structure matches our app; our custom monorepo needs desktop, phone-web, service, protocol, and adapter packages.
 
-## Question 81. What exact shadcn preset command should be used for UI scaffolding?
+## Question 80. What exact shadcn preset command should be used for UI scaffolding?
 
 User answer:
 okay there is command for created shadc presset pnpm dlx shadcn@latest init --preset b2pl2jQxu --base base --template vite --pointer
@@ -670,7 +651,7 @@ okay there is command for created shadc presset pnpm dlx shadcn@latest init --pr
 Agent context:
 The selected shadcn preset command is `pnpm dlx shadcn@latest init --preset b2pl2jQxu --base base --template vite --pointer`. It uses the Vite template, Base UI primitives, the chosen preset code, and pointer styling. Because the app requires a custom monorepo structure, this command should be applied carefully inside the appropriate frontend workspace or adapted rather than allowing it to define the entire repository layout blindly.
 
-## Question 82. If AcceptInsertText fails, should the buffer remain unchanged?
+## Question 81. If AcceptInsertText fails, should the buffer remain unchanged?
 
 User answer:
 yes
@@ -678,7 +659,7 @@ yes
 Agent context:
 If AcceptInsertText fails, the buffer should remain unchanged. The app should show the proxy window on top for manual copy and show a toast/status message on the phone explaining that insertion failed.
 
-## Question 83. Which Rust web framework should serve the phone PWA/API/WebSocket?
+## Question 82. Which Rust web framework should serve the phone PWA/API/WebSocket?
 
 User answer:
 recommended
@@ -686,7 +667,7 @@ recommended
 Agent context:
 The selected Rust web framework is axum. It is Tokio-native, has clean WebSocket support, fits a long-running service/control daemon well, and has a strong ecosystem. Alternatives considered included actix-web, poem, warp, and rocket.
 
-## Question 84. Which encrypted storage approach should we choose?
+## Question 83. Which encrypted storage approach should we choose?
 
 User answer:
 okay
@@ -694,7 +675,7 @@ okay
 Agent context:
 The selected encrypted storage approach is SQLCipher with rusqlite/libsqlite3-sys if integration and packaging are workable. This matches the requirement for full SQLite database encryption. The install/build path must account for SQLCipher native dependencies.
 
-## Question 85. What should the first implementation milestone be?
+## Question 84. What should the first implementation milestone be?
 
 User answer:
 Okay

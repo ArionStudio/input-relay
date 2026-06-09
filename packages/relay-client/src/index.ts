@@ -5,8 +5,10 @@ import type {
   DesktopCommand,
   Notice,
   RelayState,
-  ServerEvent
+  ServerEvent,
 } from "@input-relay/protocol";
+
+const ACTION_TIMEOUT_MS = 10_000;
 
 export type RelayConnection = {
   state: RelayState | null;
@@ -41,6 +43,75 @@ export function getRelayWsUrl() {
   return getRelayHttpUrl().replace(/^http/, "ws") + "/ws";
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object";
+}
+
+function isRelayState(value: unknown): value is RelayState {
+  return (
+    isRecord(value) &&
+    typeof value.locked === "boolean" &&
+    isRecord(value.buffer)
+  );
+}
+
+function isNotice(value: unknown): value is Notice {
+  return (
+    isRecord(value) &&
+    typeof value.id === "string" &&
+    typeof value.level === "string" &&
+    typeof value.message === "string"
+  );
+}
+
+function isDesktopCommand(value: unknown): value is DesktopCommand {
+  return (
+    isRecord(value) &&
+    value.type === "showProxy" &&
+    typeof value.id === "string"
+  );
+}
+
+function parseServerEvent(data: string): ServerEvent | null {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(data);
+  } catch {
+    return null;
+  }
+
+  if (!isRecord(parsed) || typeof parsed.type !== "string") {
+    return null;
+  }
+
+  if (parsed.type === "state" && isRelayState(parsed.state)) {
+    return {
+      type: "state",
+      state: parsed.state,
+    };
+  }
+
+  if (parsed.type === "notice" && isNotice(parsed.notice)) {
+    return {
+      type: "notice",
+      notice: parsed.notice,
+    };
+  }
+
+  if (parsed.type === "desktopCommand" && isDesktopCommand(parsed.command)) {
+    return {
+      type: "desktopCommand",
+      command: parsed.command,
+    };
+  }
+
+  return null;
+}
+
+function formatUnknownError(error: unknown) {
+  return error instanceof Error ? error.message : String(error);
+}
+
 export function useRelay(deviceId?: string): RelayConnection {
   const [state, setState] = React.useState<RelayState | null>(null);
   const [notice, setNotice] = React.useState<Notice | null>(null);
@@ -67,7 +138,11 @@ export function useRelay(deviceId?: string): RelayConnection {
           return;
         }
 
-        const parsed = JSON.parse(event.data) as ServerEvent;
+        const parsed = parseServerEvent(event.data);
+        if (!parsed) {
+          return;
+        }
+
         if (parsed.type === "state") {
           setState(parsed.state);
           if (parsed.state.lastNotice) {
@@ -112,28 +187,58 @@ export function useRelay(deviceId?: string): RelayConnection {
       const envelope: ClientEnvelope = {
         version: 1,
         ...(deviceId ? { deviceId } : {}),
-        action
+        action,
       };
 
-      const response = await fetch(getRelayHttpUrl() + "/api/actions", {
-        method: "POST",
-        headers: {
-          "content-type": "application/json"
-        },
-        body: JSON.stringify(envelope)
-      });
+      const controller = new AbortController();
+      const timeout = window.setTimeout(() => {
+        controller.abort();
+      }, ACTION_TIMEOUT_MS);
+
+      let response: Response;
+      try {
+        response = await fetch(getRelayHttpUrl() + "/api/actions", {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+          },
+          body: JSON.stringify(envelope),
+          signal: controller.signal,
+        });
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") {
+          throw new Error("Relay action timed out.");
+        }
+        throw error;
+      } finally {
+        window.clearTimeout(timeout);
+      }
 
       if (!response.ok) {
         throw new Error(`Relay action failed with ${response.status}`);
       }
-      const nextState = (await response.json()) as RelayState;
+
+      let payload: unknown;
+      try {
+        payload = await response.json();
+      } catch (error) {
+        throw new Error(
+          `Relay returned invalid JSON: ${formatUnknownError(error)}`,
+        );
+      }
+
+      if (!isRelayState(payload)) {
+        throw new Error("Relay returned an invalid state payload.");
+      }
+
+      const nextState = payload;
       setState(nextState);
       if (nextState.lastNotice) {
         setNotice(nextState.lastNotice);
       }
       return nextState;
     },
-    [deviceId]
+    [deviceId],
   );
 
   return { state, notice, desktopCommand, connected, sendAction };

@@ -1,5 +1,7 @@
 export type Selection = {
+  /** UTF-16 code unit offset, matching textarea selectionStart/selectionEnd. */
   start: number;
+  /** UTF-16 code unit offset, matching textarea selectionStart/selectionEnd. */
   end: number;
 };
 
@@ -168,7 +170,7 @@ export type ClientAction =
     };
 
 export type ClientEnvelope = {
-  version: 1;
+  version: number;
   deviceId?: string;
   action: ClientAction;
 };

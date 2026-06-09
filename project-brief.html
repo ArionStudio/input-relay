@@ -688,9 +688,13 @@
         <div>
           <h1>Input Relay Project Brief</h1>
           <p class="intro">
-            A local-first relay that lets a verified phone edit a PC-side proxy buffer and send the final text into the currently focused input on the PC.
+            A local-first relay that lets a verified phone edit a PC-side proxy
+            buffer and send the final text into the currently focused input on
+            the PC.
           </p>
-          <p class="source">Condensed from <code>grill-me-report.md</code>, questions 1-85.</p>
+          <p class="source">
+            Condensed from <code>grill-me-report.md</code>, questions 1-85.
+          </p>
         </div>
         <nav class="nav" aria-label="Page sections">
           <a href="#overview">Overview</a>
@@ -728,18 +732,30 @@
           <div class="section-head">
             <h2>Product Shape</h2>
             <p>
-              The app is not a remote keyboard. The phone edits an app-owned proxy buffer. Only explicit allowlisted actions can affect the PC, and insertion into other apps happens as one deliberate action.
+              The app is not a remote keyboard. The phone edits an app-owned
+              proxy buffer. Only explicit allowlisted actions can affect the PC,
+              and insertion into other apps happens as one deliberate action.
             </p>
           </div>
           <div class="two-col">
             <div class="panel">
               <h3>What it does</h3>
               <ul>
-                <li>Phone connects directly to the PC relay through Tailscale.</li>
+                <li>
+                  Phone connects directly to the PC relay through Tailscale.
+                </li>
                 <li>Phone edits a shared proxy buffer in real time.</li>
-                <li>A verified phone can trigger Accept if granted permission.</li>
-                <li>Accept tries to insert the final buffer into the currently focused PC input.</li>
-                <li>If insertion fails, the proxy window comes to the front for manual copy and the phone gets a toast.</li>
+                <li>
+                  A verified phone can trigger Accept if granted permission.
+                </li>
+                <li>
+                  Accept tries to insert the final buffer into the currently
+                  focused PC input.
+                </li>
+                <li>
+                  If insertion fails, the proxy window comes to the front for
+                  manual copy and the phone gets a toast.
+                </li>
               </ul>
             </div>
             <div class="panel">
@@ -748,7 +764,9 @@
                 <li>No cloud relay and no public Tailscale Funnel.</li>
                 <li>No native phone app for the initial product.</li>
                 <li>No arbitrary phone-driven keyboard control on the PC.</li>
-                <li>No PC mouse-click Accept by default, because it steals focus.</li>
+                <li>
+                  No PC mouse-click Accept by default, because it steals focus.
+                </li>
                 <li>No text contents in logs.</li>
               </ul>
             </div>
@@ -759,7 +777,10 @@
           <div class="section-head">
             <h2>Architecture</h2>
             <p>
-              The background service is the authority. Tauri is a local admin and proxy UI. The phone PWA is served by the PC relay, so the client is always close to the machine that will perform the action.
+              The background service is the authority. Tauri is a local admin
+              and proxy UI. The phone PWA is served by the PC relay, so the
+              client is always close to the machine that will perform the
+              action.
             </p>
           </div>
 
@@ -768,34 +789,52 @@
               <div class="lane">
                 <div class="node">
                   <strong>Phone PWA</strong>
-                  <span>React, passkey auth, WebSocket buffer editing, action buttons.</span>
+                  <span
+                    >React, passkey auth, WebSocket buffer editing, action
+                    buttons.</span
+                  >
                 </div>
-                <div class="arrow">-></div>
+                <div class="arrow">-&gt;</div>
                 <div class="node">
                   <strong>Tailscale HTTPS</strong>
-                  <span>Private tailnet route through MagicDNS and Serve, no Funnel.</span>
+                  <span
+                    >Private tailnet route through MagicDNS and Serve, no
+                    Funnel.</span
+                  >
                 </div>
               </div>
               <div class="lane">
                 <div class="node">
                   <strong>Rust Service</strong>
-                  <span>axum API, WebSocket sessions, encrypted state, permissions, actions.</span>
+                  <span
+                    >axum API, WebSocket sessions, encrypted state, permissions,
+                    actions.</span
+                  >
                 </div>
                 <div class="arrow">&lt;-&gt;</div>
                 <div class="node">
                   <strong>Tauri PC UI</strong>
-                  <span>Proxy window, settings, device approval, history, unlock flow.</span>
+                  <span
+                    >Proxy window, settings, device approval, history, unlock
+                    flow.</span
+                  >
                 </div>
               </div>
               <div class="lane">
                 <div class="node">
                   <strong>Admin IPC Adapter</strong>
-                  <span>Linux: Unix socket plus peer credentials. Other OS later.</span>
+                  <span
+                    >Linux: Unix socket plus peer credentials. Other OS
+                    later.</span
+                  >
                 </div>
-                <div class="arrow">-></div>
+                <div class="arrow">-&gt;</div>
                 <div class="node">
                   <strong>Input Backend Adapter</strong>
-                  <span>KDE Wayland first, mock backend for tests, X11/Windows/macOS later.</span>
+                  <span
+                    >KDE Wayland first, mock backend for tests,
+                    X11/Windows/macOS later.</span
+                  >
                 </div>
               </div>
             </div>
@@ -803,10 +842,35 @@
             <div class="panel">
               <h3>Adapter boundaries</h3>
               <ul class="plain-list">
-                <li><span class="dot"></span><span><strong>Admin IPC adapters</strong><br />How the local desktop UI controls the service.</span></li>
-                <li><span class="dot orange"></span><span><strong>Input backend adapters</strong><br />How the service performs narrow actions such as AcceptInsertText or LockPc.</span></li>
-                <li><span class="dot"></span><span><strong>Keychain adapters</strong><br />KWallet or Secret Service on this PC; platform credential stores later.</span></li>
-                <li><span class="dot orange"></span><span><strong>Mock backend</strong><br />For debug and tests only; normal use needs a real supported backend.</span></li>
+                <li>
+                  <span class="dot"></span
+                  ><span
+                    ><strong>Admin IPC adapters</strong><br />How the local
+                    desktop UI controls the service.</span
+                  >
+                </li>
+                <li>
+                  <span class="dot orange"></span
+                  ><span
+                    ><strong>Input backend adapters</strong><br />How the
+                    service performs narrow actions such as AcceptInsertText or
+                    LockPc.</span
+                  >
+                </li>
+                <li>
+                  <span class="dot"></span
+                  ><span
+                    ><strong>Keychain adapters</strong><br />KWallet or Secret
+                    Service on this PC; platform credential stores later.</span
+                  >
+                </li>
+                <li>
+                  <span class="dot orange"></span
+                  ><span
+                    ><strong>Mock backend</strong><br />For debug and tests
+                    only; normal use needs a real supported backend.</span
+                  >
+                </li>
               </ul>
             </div>
           </div>
@@ -816,7 +880,8 @@
           <div class="section-head">
             <h2>Core Flows</h2>
             <p>
-              These flows are the product contract. Implementation can change internally, but these user-facing behaviors should stay stable.
+              These flows are the product contract. Implementation can change
+              internally, but these user-facing behaviors should stay stable.
             </p>
           </div>
           <div class="three-col">
@@ -848,7 +913,10 @@
                 <li>Verified phone taps Accept.</li>
                 <li>Service checks device permission.</li>
                 <li>Backend inserts into the currently focused PC input.</li>
-                <li>Success clears the buffer; failure keeps it and shows manual copy.</li>
+                <li>
+                  Success clears the buffer; failure keeps it and shows manual
+                  copy.
+                </li>
               </ol>
             </div>
           </div>
@@ -858,7 +926,9 @@
           <div class="section-head">
             <h2>Security Model</h2>
             <p>
-              Access is layered: private network transport, passkey device auth, app unlock, encrypted local state, per-device permissions, and narrow action handlers.
+              Access is layered: private network transport, passkey device auth,
+              app unlock, encrypted local state, per-device permissions, and
+              narrow action handlers.
             </p>
           </div>
 
@@ -866,23 +936,43 @@
             <div class="panel">
               <h3>Decisions</h3>
               <ul>
-                <li>Tailscale is required for the default path; both devices must be in the tailnet.</li>
-                <li>Tailscale Serve is allowed; Funnel is not part of the plan.</li>
+                <li>
+                  Tailscale is required for the default path; both devices must
+                  be in the tailnet.
+                </li>
+                <li>
+                  Tailscale Serve is allowed; Funnel is not part of the plan.
+                </li>
                 <li>Passkeys are default for verified phones.</li>
                 <li>Registration is initiated from the PC only.</li>
                 <li>Permissions are assigned per device.</li>
-                <li>App state is locked until keychain or app password unlocks it.</li>
+                <li>
+                  App state is locked until keychain or app password unlocks it.
+                </li>
               </ul>
             </div>
             <div class="panel">
               <h3>Local protection</h3>
               <ul>
-                <li>Whole SQLite database encryption via SQLCipher and <code>rusqlite</code> if packaging is workable.</li>
-                <li>OS keychain is the default unlock helper on supported systems.</li>
+                <li>
+                  Whole SQLite database encryption via SQLCipher and
+                  <code>rusqlite</code> if packaging is workable.
+                </li>
+                <li>
+                  OS keychain is the default unlock helper on supported systems.
+                </li>
                 <li>App password remains the fallback and recovery path.</li>
-                <li>Linux admin IPC uses Unix socket plus peer credential checks.</li>
-                <li>Locked phone page may load only a minimal "relay locked" state.</li>
-                <li>Logs must never include buffer text, accepted text, clipboard text, or history entries.</li>
+                <li>
+                  Linux admin IPC uses Unix socket plus peer credential checks.
+                </li>
+                <li>
+                  Locked phone page may load only a minimal "relay locked"
+                  state.
+                </li>
+                <li>
+                  Logs must never include buffer text, accepted text, clipboard
+                  text, or history entries.
+                </li>
               </ul>
             </div>
           </div>
@@ -904,7 +994,10 @@
               <tr>
                 <td><code>acceptInsertText</code></td>
                 <td>PC chooses</td>
-                <td>Device can request final insertion into the currently focused PC input.</td>
+                <td>
+                  Device can request final insertion into the currently focused
+                  PC input.
+                </td>
               </tr>
               <tr>
                 <td><code>clearBuffer</code></td>
@@ -929,7 +1022,8 @@
           <div class="section-head">
             <h2>Interface Prototype</h2>
             <p>
-              These are structural prototypes, not final screens. They show the expected controls, hierarchy, and focus-safe behavior.
+              These are structural prototypes, not final screens. They show the
+              expected controls, hierarchy, and focus-safe behavior.
             </p>
           </div>
 
@@ -941,7 +1035,8 @@
                   <span class="status">Connected</span>
                 </div>
                 <div class="textarea">
-                  Type here from the phone. The PC proxy buffer updates live.<span class="cursor"></span>
+                  Type here from the phone. The PC proxy buffer updates
+                  live.<span class="cursor"></span>
                 </div>
                 <div class="button-row">
                   <div class="button primary">Accept</div>
@@ -960,7 +1055,8 @@
                 </div>
                 <div class="desktop-body">
                   <div class="proxy-input">
-                    Current shared buffer appears here. PC mouse-click Accept is not shown because it can steal focus.
+                    Current shared buffer appears here. PC mouse-click Accept is
+                    not shown because it can steal focus.
                   </div>
                   <div class="toolbar">
                     <div class="tool">Copy</div>
@@ -983,13 +1079,24 @@
                 <div class="settings-body">
                   <div>
                     <h3>Device</h3>
-                    <p class="caption">Arion iPhone, mobile Safari, passkey available. Registration was initiated from this PC.</p>
+                    <p class="caption">
+                      Arion iPhone, mobile Safari, passkey available.
+                      Registration was initiated from this PC.
+                    </p>
                   </div>
                   <div>
-                    <div class="setting-row"><span>editBuffer</span><span class="switch"></span></div>
-                    <div class="setting-row"><span>acceptInsertText</span><span class="switch"></span></div>
-                    <div class="setting-row"><span>showProxy</span><span class="switch"></span></div>
-                    <div class="setting-row"><span>lockPc</span><span class="switch"></span></div>
+                    <div class="setting-row">
+                      <span>editBuffer</span><span class="switch"></span>
+                    </div>
+                    <div class="setting-row">
+                      <span>acceptInsertText</span><span class="switch"></span>
+                    </div>
+                    <div class="setting-row">
+                      <span>showProxy</span><span class="switch"></span>
+                    </div>
+                    <div class="setting-row">
+                      <span>lockPc</span><span class="switch"></span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1001,25 +1108,33 @@
           <div class="section-head">
             <h2>Action Protocol</h2>
             <p>
-              Phone messages should be structured and versioned. The MVP can use simple snapshots, but the protocol should leave room for richer edits later.
+              Phone messages should be structured and versioned. The MVP can use
+              simple snapshots, but the protocol should leave room for richer
+              edits later.
             </p>
           </div>
           <div class="two-col">
-            <pre>{
+            <pre>
+{
   "version": 1,
   "type": "buffer.setText",
   "text": "Final text from phone",
   "selection": { "start": 21, "end": 21 }
-}</pre>
-            <pre>{
+}</pre
+            >
+            <pre>
+{
   "version": 1,
   "type": "action.acceptInsertText",
   "requestId": "01J...",
   "bufferRevision": 42
-}</pre>
+}</pre
+            >
           </div>
           <div class="callout" style="margin-top: 14px">
-            <strong>Important:</strong> buffer editing actions operate only on the app-owned proxy buffer. PC actions such as AcceptInsertText and LockPc are explicit commands with backend capability checks.
+            <strong>Important:</strong> buffer editing actions operate only on
+            the app-owned proxy buffer. PC actions such as AcceptInsertText and
+            LockPc are explicit commands with backend capability checks.
           </div>
         </section>
 
@@ -1027,7 +1142,9 @@
           <div class="section-head">
             <h2>Technology Stack</h2>
             <p>
-              The stack keeps system work in Rust and interface work in React. The phone and PC UI share conventions without becoming the same app.
+              The stack keeps system work in Rust and interface work in React.
+              The phone and PC UI share conventions without becoming the same
+              app.
             </p>
           </div>
 
@@ -1048,22 +1165,35 @@
               <tr>
                 <td>Desktop UI</td>
                 <td>Tauri, React, TypeScript, Vite</td>
-                <td>Tauri React calls Rust commands that bridge to local admin IPC.</td>
+                <td>
+                  Tauri React calls Rust commands that bridge to local admin
+                  IPC.
+                </td>
               </tr>
               <tr>
                 <td>Phone PWA</td>
                 <td>React, TypeScript, Vite, shadcn/ui, Tailwind</td>
-                <td>Live WebSocket connection is required; offline is only a reconnect shell.</td>
+                <td>
+                  Live WebSocket connection is required; offline is only a
+                  reconnect shell.
+                </td>
               </tr>
               <tr>
                 <td>UI base</td>
                 <td>shadcn/ui with Base UI</td>
-                <td><code>pnpm dlx shadcn@latest init --preset b2pl2jQxu --base base --template vite --pointer</code></td>
+                <td>
+                  <code
+                    >pnpm dlx shadcn@latest init --preset b2pl2jQxu --base base
+                    --template vite --pointer</code
+                  >
+                </td>
               </tr>
               <tr>
                 <td>Service</td>
                 <td>Rust with <code>axum</code></td>
-                <td>Serves PWA, API, WebSocket, auth, sessions, and actions.</td>
+                <td>
+                  Serves PWA, API, WebSocket, auth, sessions, and actions.
+                </td>
               </tr>
               <tr>
                 <td>Auth</td>
@@ -1073,7 +1203,10 @@
               <tr>
                 <td>Storage</td>
                 <td>SQLCipher with <code>rusqlite</code></td>
-                <td>Whole database encrypted; packaging must handle native dependency.</td>
+                <td>
+                  Whole database encrypted; packaging must handle native
+                  dependency.
+                </td>
               </tr>
               <tr>
                 <td>Local IPC</td>
@@ -1088,34 +1221,53 @@
           <div class="section-head">
             <h2>Runtime Rules</h2>
             <p>
-              These rules keep the behavior predictable under normal use, failure, multiple devices, and privacy-sensitive states.
+              These rules keep the behavior predictable under normal use,
+              failure, multiple devices, and privacy-sensitive states.
             </p>
           </div>
 
           <div class="three-col">
             <div class="stack">
               <strong>Session</strong>
-              <span>One active phone/device session at a time. A second verified phone gets read-only status and cannot edit or Accept.</span>
+              <span
+                >One active phone/device session at a time. A second verified
+                phone gets read-only status and cannot edit or Accept.</span
+              >
             </div>
             <div class="stack">
               <strong>History</strong>
-              <span>Modes are none, last X, and all. Default is none. If last X is selected, X defaults to 10.</span>
+              <span
+                >Modes are none, last X, and all. Default is none. If last X is
+                selected, X defaults to 10.</span
+              >
             </div>
             <div class="stack">
               <strong>Buffer after Accept</strong>
-              <span>Successful insertion clears the buffer. Failed insertion keeps it unchanged for manual copy.</span>
+              <span
+                >Successful insertion clears the buffer. Failed insertion keeps
+                it unchanged for manual copy.</span
+              >
             </div>
             <div class="stack">
               <strong>Locked state</strong>
-              <span>No buffer, history, devices, permissions, registration, or actions are available until app unlock.</span>
+              <span
+                >No buffer, history, devices, permissions, registration, or
+                actions are available until app unlock.</span
+              >
             </div>
             <div class="stack">
               <strong>Unsupported system</strong>
-              <span>Inform the user clearly that normal operation is unsupported. Mock backend remains available for debug only.</span>
+              <span
+                >Inform the user clearly that normal operation is unsupported.
+                Mock backend remains available for debug only.</span
+              >
             </div>
             <div class="stack">
               <strong>Installer</strong>
-              <span>First installer targets this KDE Wayland PC and is structured so other environments can be added later.</span>
+              <span
+                >First installer targets this KDE Wayland PC and is structured
+                so other environments can be added later.</span
+              >
             </div>
           </div>
         </section>
@@ -1124,7 +1276,9 @@
           <div class="section-head">
             <h2>MVP Milestone</h2>
             <p>
-              Build the local mock milestone first. It proves the architecture and interface loop before passkey, Tailscale, and KDE insertion complexity.
+              Build the local mock milestone first. It proves the architecture
+              and interface loop before passkey, Tailscale, and KDE insertion
+              complexity.
             </p>
           </div>
 
@@ -1159,7 +1313,10 @@
           </div>
 
           <div class="callout" style="margin-top: 14px">
-            <strong>MVP success:</strong> installed on this KDE Wayland PC, phone pairs through the planned path, edits the proxy buffer through a live connection, Accept inserts into the focused input or falls back safely with a mobile toast, and Lock PC works when granted.
+            <strong>MVP success:</strong> installed on this KDE Wayland PC,
+            phone pairs through the planned path, edits the proxy buffer through
+            a live connection, Accept inserts into the focused input or falls
+            back safely with a mobile toast, and Lock PC works when granted.
           </div>
         </section>
 
@@ -1167,39 +1324,58 @@
           <div class="section-head">
             <h2>Implementation Risks</h2>
             <p>
-              These are not product decisions. They are engineering investigations that should be handled early because they can affect the installer and backend boundaries.
+              These are not product decisions. They are engineering
+              investigations that should be handled early because they can
+              affect the installer and backend boundaries.
             </p>
           </div>
           <div class="flow-steps">
             <div class="step">
               <div>
                 <h3>KDE Wayland insertion</h3>
-                <p>Find the safest reliable route for AcceptInsertText. Clipboard plus paste trigger is allowed internally if it preserves clipboard when possible and never exposes arbitrary keyboard control.</p>
+                <p>
+                  Find the safest reliable route for AcceptInsertText. Clipboard
+                  plus paste trigger is allowed internally if it preserves
+                  clipboard when possible and never exposes arbitrary keyboard
+                  control.
+                </p>
               </div>
             </div>
             <div class="step">
               <div>
                 <h3>SQLCipher packaging</h3>
-                <p>Confirm build/install story for SQLCipher with Rust on this machine before depending on it deeply.</p>
+                <p>
+                  Confirm build/install story for SQLCipher with Rust on this
+                  machine before depending on it deeply.
+                </p>
               </div>
             </div>
             <div class="step">
               <div>
                 <h3>Passkeys and Tailscale origin</h3>
-                <p>Passkeys need a secure stable origin. Tailscale MagicDNS plus HTTPS is the expected default, and the app should check instead of silently configuring Serve.</p>
+                <p>
+                  Passkeys need a secure stable origin. Tailscale MagicDNS plus
+                  HTTPS is the expected default, and the app should check
+                  instead of silently configuring Serve.
+                </p>
               </div>
             </div>
             <div class="step">
               <div>
                 <h3>KWallet unlock behavior</h3>
-                <p>This PC has KWallet/Secret Service tooling available. The keychain adapter still needs careful behavior when the wallet is locked, unavailable, or cleared.</p>
+                <p>
+                  This PC has KWallet/Secret Service tooling available. The
+                  keychain adapter still needs careful behavior when the wallet
+                  is locked, unavailable, or cleared.
+                </p>
               </div>
             </div>
           </div>
         </section>
 
         <footer class="footer">
-          Generated as a condensed project brief from the grill-me report. Raw Q&A remains in <code>grill-me-report.md</code>.
+          Generated as a condensed project brief from the grill-me report. Raw
+          Q&A remains in <code>grill-me-report.md</code>.
         </footer>
       </main>
     </div>
