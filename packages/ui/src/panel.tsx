@@ -4,7 +4,7 @@ import { cn } from "./cn";
 export function Panel({
   className,
   ...props
-}: React.HTMLAttributes<HTMLDivElement>) {
+}: React.HTMLAttributes<HTMLElement>) {
   return (
     <section
       className={cn(

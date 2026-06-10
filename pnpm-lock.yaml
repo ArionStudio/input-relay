@@ -70,7 +70,7 @@ importers:
         specifier: ^5.9.3
         version: 5.9.3
       vite:
-        specifier: ^7.2.4
+        specifier: ^7.3.2
         version: 7.3.5(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.48.0)
 
   apps/phone-web:

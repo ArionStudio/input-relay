@@ -48,6 +48,8 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function isRelayState(value: unknown): value is RelayState {
+  // TODO: Replace this minimal transport guard with exhaustive RelayState
+  // validation before accepting untrusted relay endpoints.
   return (
     isRecord(value) &&
     typeof value.locked === "boolean" &&

@@ -5,6 +5,9 @@ dist/
 .DS_Store
 *.log
 *.local
+.env
+.env.*
+!.env.example
 *.tsbuildinfo
 apps/desktop/src-tauri/target/
 apps/desktop/src-tauri/gen/

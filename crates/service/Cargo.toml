@@ -12,6 +12,8 @@ input-relay-protocol = { path = "../protocol" }
 dirs = "6"
 evdev = "0.13.2"
 parking_lot.workspace = true
+# Prototype builds bundle SQLCipher/OpenSSL so encrypted storage works without
+# system package setup; revisit feature-gating before publishing binaries.
 rusqlite = { version = "0.40.1", features = ["bundled-sqlcipher-vendored-openssl"] }
 serde.workspace = true
 serde_json.workspace = true
