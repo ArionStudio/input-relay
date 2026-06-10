@@ -1,0 +1,8 @@
+@import "@input-relay/ui/styles.css";
+@source "../../../packages/ui/src";
+
+body {
+  min-width: 320px;
+  overflow: hidden;
+  overscroll-behavior: none;
+}

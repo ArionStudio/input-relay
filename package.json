@@ -1,0 +1,26 @@
+{
+  "name": "input-relay",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently -k -n service,desktop,phone -c green,cyan,magenta \"pnpm dev:service\" \"pnpm dev:desktop\" \"pnpm dev:phone\"",
+    "dev:reachable": "INPUT_RELAY_HOST=0.0.0.0 pnpm dev",
+    "dev:stop": "scripts/stop-dev.sh",
+    "dev:ui": "turbo dev",
+    "dev:service": "cargo run -p input-relay-service",
+    "dev:desktop": "pnpm --filter @input-relay/desktop dev",
+    "dev:phone": "pnpm --filter @input-relay/phone-web dev",
+    "build": "turbo build",
+    "check": "turbo check",
+    "lint": "turbo lint",
+    "format": "cargo fmt --all && pnpm prettier --write .",
+    "tauri:dev": "pnpm --filter @input-relay/desktop tauri:dev"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "prettier": "^3.6.2",
+    "turbo": "^2.6.1",
+    "typescript": "^5.9.3"
+  },
+  "packageManager": "pnpm@10.33.4"
+}
