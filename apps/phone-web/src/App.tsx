@@ -1,5 +1,5 @@
 import * as React from "react";
-import type { Notice } from "@input-relay/protocol";
+import type { Notice, Selection as TextSelection } from "@input-relay/protocol";
 import { getRelayHttpUrl, useRelay } from "@input-relay/relay-client";
 import { Badge, Button, Input, Textarea } from "@input-relay/ui";
 import {
@@ -24,6 +24,11 @@ type PhoneView = "compose" | "settings";
 type RegistrationMessage = {
   tone: "error" | "success";
   text: string;
+};
+
+type DraftSnapshot = {
+  text: string;
+  selection: TextSelection;
 };
 
 export function App() {
@@ -88,12 +93,14 @@ export function App() {
   const needsRegistration = !locked && !currentDevice;
   const keyboardComposeMode =
     keyboardOpen && activeView === "compose" && !locked && !needsRegistration;
-  const acceptDisabledReason = getAcceptDisabledReason({
-    connected,
-    locked,
-    hasPermission: Boolean(permissions?.acceptInsertText),
-    hasText: Boolean(draft),
-  });
+  const getAcceptDisabledReasonForText = (text: string) =>
+    getAcceptDisabledReason({
+      connected,
+      locked,
+      hasPermission: Boolean(permissions?.acceptInsertText),
+      hasText: Boolean(text),
+    });
+  const acceptDisabledReason = getAcceptDisabledReasonForText(draft);
   const toastNotice =
     notice && toastId === notice.id ? formatPhoneNotice(notice) : null;
 
@@ -138,14 +145,20 @@ export function App() {
     void sendAction(action);
   };
 
-  const acceptBuffer = () => {
-    if (acceptDisabledReason) {
+  const acceptBuffer = (snapshot?: DraftSnapshot) => {
+    const text = snapshot?.text ?? draft;
+    const selection = snapshot?.selection ?? readDraftSelection();
+    if (getAcceptDisabledReasonForText(text)) {
       return;
+    }
+    draftSelectionRef.current = selection;
+    if (text !== draft) {
+      setDraft(text);
     }
     send({
       type: "acceptDraftText",
-      text: draft,
-      selection: readDraftSelection(),
+      text,
+      selection,
     });
   };
 
@@ -470,27 +483,124 @@ function ComposeView({
   acceptDisabledReason: string | null;
   clearDisabled: boolean;
   keyboardOpen: boolean;
-  textareaRef: React.Ref<HTMLTextAreaElement>;
+  textareaRef: React.RefObject<HTMLTextAreaElement | null>;
   updateSelection: (event: React.SyntheticEvent<HTMLTextAreaElement>) => void;
   updateText: (event: React.ChangeEvent<HTMLTextAreaElement>) => void;
-  accept: () => void;
+  accept: (snapshot?: DraftSnapshot) => void;
   clear: () => void;
 }) {
+  const pendingSubmitSnapshotRef = React.useRef<DraftSnapshot | null>(null);
+  const acceptRef = React.useRef(accept);
   const statusText = !canEdit
     ? "Read only"
     : draft.length > 0
       ? `${draft.length} characters`
       : "Empty";
 
-  const acceptOnEnter = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (event.key !== "Enter" || event.shiftKey) {
+  React.useEffect(() => {
+    acceptRef.current = accept;
+  }, [accept]);
+
+  React.useEffect(() => {
+    const textarea = textareaRef.current;
+    if (!textarea) {
       return;
     }
-    event.preventDefault();
-    if (!acceptDisabledReason) {
-      accept();
-    }
-  };
+
+    const readTextareaSnapshot = (): DraftSnapshot => ({
+      text: textarea.value,
+      selection: {
+        start: textarea.selectionStart,
+        end: textarea.selectionEnd,
+      },
+    });
+
+    const acceptTextareaSnapshot = (snapshot: DraftSnapshot) => {
+      textarea.value = snapshot.text;
+      textarea.selectionStart = snapshot.selection.start;
+      textarea.selectionEnd = snapshot.selection.end;
+      acceptRef.current(snapshot);
+    };
+
+    const readSnapshotBeforeInsertedLineBreak = (): DraftSnapshot => {
+      const text = textarea.value;
+      const selectionStart = textarea.selectionStart;
+      const selectionEnd = textarea.selectionEnd;
+      const caret = Math.max(selectionStart, selectionEnd);
+      const lineBreakIndex =
+        caret > 0 && text[caret - 1] === "\n" ? caret - 1 : -1;
+
+      if (lineBreakIndex === -1) {
+        return {
+          text,
+          selection: {
+            start: selectionStart,
+            end: selectionEnd,
+          },
+        };
+      }
+
+      return {
+        text: text.slice(0, lineBreakIndex) + text.slice(lineBreakIndex + 1),
+        selection: {
+          start: lineBreakIndex,
+          end: lineBreakIndex,
+        },
+      };
+    };
+
+    const isSubmitInput = (event: InputEvent) =>
+      !event.isComposing &&
+      (event.inputType === "insertLineBreak" ||
+        event.inputType === "insertParagraph");
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Enter" || event.shiftKey || event.isComposing) {
+        return;
+      }
+      event.preventDefault();
+      pendingSubmitSnapshotRef.current = null;
+      acceptTextareaSnapshot(readTextareaSnapshot());
+    };
+
+    const handleBeforeInput = (event: InputEvent) => {
+      if (!isSubmitInput(event)) {
+        return;
+      }
+
+      const snapshot = readTextareaSnapshot();
+      pendingSubmitSnapshotRef.current = snapshot;
+
+      if (event.cancelable) {
+        event.preventDefault();
+        pendingSubmitSnapshotRef.current = null;
+        acceptTextareaSnapshot(snapshot);
+      }
+    };
+
+    const handleInput = (event: Event) => {
+      const inputEvent = event as InputEvent;
+      if (!isSubmitInput(inputEvent)) {
+        return;
+      }
+
+      const snapshot =
+        pendingSubmitSnapshotRef.current ??
+        readSnapshotBeforeInsertedLineBreak();
+      pendingSubmitSnapshotRef.current = null;
+      acceptTextareaSnapshot(snapshot);
+    };
+
+    textarea.addEventListener("keydown", handleKeyDown);
+    textarea.addEventListener("beforeinput", handleBeforeInput);
+    textarea.addEventListener("input", handleInput);
+
+    return () => {
+      textarea.removeEventListener("keydown", handleKeyDown);
+      textarea.removeEventListener("beforeinput", handleBeforeInput);
+      textarea.removeEventListener("input", handleInput);
+    };
+  }, [textareaRef]);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
@@ -515,7 +625,6 @@ function ComposeView({
         ref={textareaRef}
         value={draft}
         onChange={updateText}
-        onKeyDown={acceptOnEnter}
         onKeyUp={updateSelection}
         onMouseUp={updateSelection}
         onSelect={updateSelection}
